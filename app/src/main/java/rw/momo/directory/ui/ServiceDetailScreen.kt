@@ -18,6 +18,8 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import rw.momo.directory.data.CodeType
@@ -29,9 +31,22 @@ import rw.momo.directory.util.Dialer
 fun ServiceDetailScreen(service: Service, onBack: () -> Unit) {
     val context = LocalContext.current
     val clipboard: ClipboardManager = LocalClipboardManager.current
-    var billId by remember { mutableStateOf("") }
+    
+    // Form State
+    val paramsState = remember { mutableStateMapOf<String, String>() }
     val needsParam = service.codeType == CodeType.DIRECT_WITH_PARAMETER
-    val resolvedCode = if (needsParam) Dialer.buildIrembo(billId) ?: service.entryCode else service.entryCode
+
+    // Build the code dynamically based on inputs
+    val resolvedCode = if (needsParam) {
+        var code = service.entryCode
+        service.parameters.forEach { param ->
+            val value = paramsState[param] ?: ""
+            code = code.replace("{$param}", value)
+        }
+        code
+    } else service.entryCode
+
+    val isFormValid = !needsParam || service.parameters.all { !paramsState[it].isNullOrBlank() }
 
     Scaffold(
         topBar = {
@@ -57,13 +72,18 @@ fun ServiceDetailScreen(service: Service, onBack: () -> Unit) {
             VerificationBanner(service)
 
             if (needsParam) {
-                OutlinedTextField(
-                    value = billId, onValueChange = { billId = it },
-                    label = { Text("Irembo Bill ID") },
-                    placeholder = { Text("e.g. 1234567890") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Text("Fill in the details:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                service.parameters.forEach { param ->
+                    OutlinedTextField(
+                        value = paramsState[param] ?: "",
+                        onValueChange = { paramsState[param] = it },
+                        label = { Text(param.replaceFirstChar { it.uppercase() }) },
+                        keyboardOptions = KeyboardOptions(keyboardType = if (param == "amount") KeyboardType.Number else KeyboardType.Phone),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
             }
 
             Box(
@@ -74,11 +94,16 @@ fun ServiceDetailScreen(service: Service, onBack: () -> Unit) {
                     Text("USSD code", fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                     Spacer(Modifier.height(6.dp))
-                    Text(resolvedCode, fontSize = 26.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Text(
+                        if (needsParam && !isFormValid) "Fill the form above..." else resolvedCode,
+                        fontSize = 22.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp,
+                        color = if (needsParam && !isFormValid) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f) else MaterialTheme.colorScheme.onSurface
+                    )
                     Spacer(Modifier.height(16.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Button(
-                            onClick = { Dialer.open(context, resolvedCode) },
+                            onClick = { if (isFormValid) Dialer.open(context, resolvedCode) },
+                            enabled = isFormValid,
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp)
                         ) {
@@ -86,9 +111,12 @@ fun ServiceDetailScreen(service: Service, onBack: () -> Unit) {
                         }
                         OutlinedButton(
                             onClick = {
-                                clipboard.setText(AnnotatedString(resolvedCode))
-                                Toast.makeText(context, "Code copied", Toast.LENGTH_SHORT).show()
+                                if (isFormValid) {
+                                    clipboard.setText(AnnotatedString(resolvedCode))
+                                    Toast.makeText(context, "Code copied", Toast.LENGTH_SHORT).show()
+                                }
                             },
+                            enabled = isFormValid,
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp)
                         ) {

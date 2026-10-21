@@ -1,4 +1,4 @@
-package rw.momo.directory.data
+﻿package rw.momo.directory.data
 
 enum class CodeType { MAIN_MENU, DIRECT, DIRECT_WITH_PARAMETER }
 enum class VerificationStatus { OFFICIALLY_DOCUMENTED, NEEDS_CONFIRMATION }
