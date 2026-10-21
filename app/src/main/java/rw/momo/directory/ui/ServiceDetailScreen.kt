@@ -10,6 +10,33 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import rw.momo.directory.data.CodeType
+import rw.momo.directory.data.Service
+import rw.momo.directory.util.Dialer
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ServiceDetailScreen(service: Service, onBack: () -> Unit) {
+    val context = LocalContext.current
+    val clipboard: ClipboardManager = LocalClipboardManager.current
+    var billId by remember { mutableStateOf("") }
+    val needsParam = service.codeType == CodeType.DIRECT_WITH_PARAMETER
+    val resolvedCode = if (needsParam) Dialer.buildIrembo(billId) ?: service.entryCode else service.entryCode
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(service.name, maxLines = 1) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
@@ -100,44 +127,6 @@ import androidx.compose.runtime.*
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
-        }
-    }
-}
-
-
-Write-File "$root\$pkg\MainActivity.kt" @'
-package rw.momo.directory
-
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.runtime.*
-import androidx.lifecycle.viewmodel.compose.viewModel
-import rw.momo.directory.data.Service
-import rw.momo.directory.ui.*
-import rw.momo.directory.ui.theme.MoMoTheme
-
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            MoMoTheme {
-                val vm: MainViewModel = viewModel()
-                val state by vm.state.collectAsState()
-                var selected by remember { mutableStateOf<Service?>(null) }
-                if (selected == null) {
-                    HomeScreen(
-                        state = state,
-                        categories = vm.allCategories,
-                        onQuery = vm::setQuery,
-                        onCategory = vm::setCategory,
-                        onOpen = { vm.pushRecent(it.id); selected = it },
-                        onFavorite = vm::toggleFavorite
-                    )
-                } else {
-                    ServiceDetailScreen(service = selected!!, onBack = { selected = null })
-                }
-            }
         }
     }
 }
