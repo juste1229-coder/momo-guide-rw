@@ -2,8 +2,8 @@
 
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -142,7 +142,9 @@ fun ServiceDetailScreen(service: Service, onBack: () -> Unit) {
                                 val valToSave = paramsState[param]
                                 if (!valToSave.isNullOrBlank()) {
                                     scope.launch { savedPrefs.saveNumber(service.id, valToSave) }
-                                    Toast.makeText(context, "Saved to favorites!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "Number saved to favorites!", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, "Type a number first!", Toast.LENGTH_SHORT).show()
                                 }
                             }) {
                                 Icon(Icons.Filled.BookmarkAdd, contentDescription = "Save", tint = MaterialTheme.colorScheme.primary)
@@ -152,15 +154,20 @@ fun ServiceDetailScreen(service: Service, onBack: () -> Unit) {
                 }
 
                 if (savedList.isNotEmpty()) {
-                    Text("Favorites", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                    Text("Tap to autofill:", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                     Row(
                         Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         savedList.forEach { saved ->
                             AssistChip(
-                                onClick = { paramsState["phone"] = saved; paramsState["meter"] = saved; paramsState["account"] = saved },
-                                label = { Text(saved) },
+                                onClick = { 
+                                    paramsState["phone"] = saved
+                                    paramsState["meter"] = saved
+                                    paramsState["account"] = saved
+                                    paramsState["merchant"] = saved
+                                },
+                                label = { Text(saved, fontWeight = FontWeight.Bold) },
                                 leadingIcon = { Icon(Icons.Filled.Person, null, modifier = Modifier.size(16.dp)) }
                             )
                         }
@@ -200,4 +207,3 @@ fun ServiceDetailScreen(service: Service, onBack: () -> Unit) {
         }
     }
 }
-
