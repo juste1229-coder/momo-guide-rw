@@ -1,4 +1,4 @@
-package rw.momo.directory.ui
+﻿package rw.momo.directory.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -45,7 +45,7 @@ fun ServiceCard(service: Service, isFavorite: Boolean, onClick: () -> Unit, onFa
             }
             IconButton(onClick = onFavorite) {
                 Icon(
-                    if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                    if (isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
                     contentDescription = "Favorite",
                     tint = if (isFavorite) MaterialTheme.colorScheme.primary
                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
